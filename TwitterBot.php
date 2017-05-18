@@ -7,8 +7,8 @@ class TwitterBot
 	const CONSUMER_KEY = "TwitterConsumerKey";
 	const CONSUMER_SECRET = "TwitterConsumerSecret";
 	
-	//Reusable function to send Tweets, just pass in an array of parameters
-	function SendTweet($postfields)
+	//Reusable function to Send a Twitter Post request, pass in request URL and array of parameters
+	function SendTwitterPostRequest($url, $postfields)
 	{
 		$settings = array
 		(
@@ -17,14 +17,20 @@ class TwitterBot
 			'consumer_key' => self::CONSUMER_KEY,
 			'consumer_secret' => self::CONSUMER_SECRET
 		);
-		
-		$url = 'https://api.twitter.com/1.1/statuses/update.json';
-		
-		$requestMethod = 'POST';
+
 		$twitter = new TwitterAPIExchange($settings);
-		$fullResponse = $twitter->buildOauth($url, $requestMethod)
+		$fullResponse = $twitter->buildOauth($url, 'POST')
 						->setPostfields($postfields)
 						->performRequest();
+						
+		return $fullResponse;
+	}
+	
+	//Reusable function to send Tweets, just pass in an array of parameters
+	function SendTweet($postfields)
+	{	
+		$url = 'https://api.twitter.com/1.1/statuses/update.json';
+		self::SendTwitterPostRequest($url, $postfields);
 	}
 	
 	//Pass in a string array of "interests" that the bot will search for and Retweet
@@ -59,16 +65,12 @@ class TwitterBot
 				$tweetId = $json->statuses[$count]->id_str;			
 				
 				$url = "https://api.twitter.com/1.1/statuses/retweet/$tweetId.json";
-				$requestMethod = 'POST';
-									
+													
 				$postfields = array(
 				  'trim_user' => "1"
 				);
 
-				$twitter = new TwitterAPIExchange($settings);
-				$twitter->buildOauth($url, $requestMethod)
-						->setPostfields($postfields)
-						->performRequest();				
+				self::SendTwitterPostRequest($url, $postfields);
 			}
 		}
 		
@@ -116,12 +118,7 @@ class TwitterBot
 					'id' => "$tweetID"
 				);
 				
-				$requestMethod = 'POST';
-				
-				$twitter = new TwitterAPIExchange($settings);
-				$temp = $twitter->buildOauth($url, $requestMethod)
-								->setPostfields($postfields)
-								->performRequest();
+				$temp = self::SendTwitterPostRequest($url, $postfields);
 			}
 		}
 		
@@ -179,18 +176,12 @@ class TwitterBot
 				'id' => "$tweetID"
 			);
 			
-			$requestMethod = 'POST';
+			$temp = self::SendTwitterPostRequest($url, $postfields);
 			
-			$twitter = new TwitterAPIExchange($settings);
-			$temp = $twitter->buildOauth($url, $requestMethod)
-							->setPostfields($postfields)
-							->performRequest();
-							
 			self::ReplyToTweet($json[$tweetIndex]);
 		}
 		
 		return $newSinceID;
-
 	}
 	
 	//Reply to Tweets sent to the bot in certain cases...
@@ -263,14 +254,6 @@ class TwitterBot
 		$explanation = $nasaJSON->explanation;
 		$title = $nasaJSON->title;
 		$image = $nasaJSON->url;
-				
-		$settings = array
-		(
-			'oauth_access_token' => self::OAUTH_ACCESS_TOKEN,
-			'oauth_access_token_secret' => self::OAUTH_ACCESS_TOKEN_SECRET,
-			'consumer_key' => self::CONSUMER_KEY,
-			'consumer_secret' => self::CONSUMER_SECRET
-		);
 
 		//Image path
 		$path = $nasaJSON->url;
@@ -279,19 +262,14 @@ class TwitterBot
 		//https://dev.twitter.com/rest/reference/post/media/upload-init
 		// $url = "https://api.twitter.com/1.1/statuses/retweet/$tweetId.json";
 		$url = 'https://upload.twitter.com/1.1/media/upload.json';
-		$requestMethod = 'POST';
-
+		
 		$postfields = array(
 			'media_type' => "image/jpeg",
 			'command' => "INIT",
 			'total_bytes' => strlen(file_get_contents($path))
 		);
 
-		$twitter = new TwitterAPIExchange($settings);
-		$fullResponse = $twitter->buildOauth($url, $requestMethod)
-				->setPostfields($postfields)
-				->performRequest();
-
+		$fullResponse = self::SendTwitterPostRequest($url, $postfields);
 		$json = json_decode($fullResponse);
 
 		$mediaID = $json->media_id_string;
@@ -308,9 +286,6 @@ class TwitterBot
 		//Need to do the APPEND next to send the data. Sort of
 		//https://upload.twitter.com/1.1/media/upload.json?command=APPEND&media_id=123&segment_index=2&media_data=123
 		$url = 'https://upload.twitter.com/1.1/media/upload.json';
-
-		$requestMethod = 'POST';
-
 		$postfields = array(
 			'command' => "APPEND",
 			'media_id' => "$mediaID",
@@ -318,27 +293,18 @@ class TwitterBot
 			'media_data' => "$mediaData"
 		);
 
-		$twitter = new TwitterAPIExchange($settings);
-		$fullResponse = $twitter->buildOauth($url, $requestMethod)
-				->setPostfields($postfields)
-				->performRequest();
-
+		self::SendTwitterPostRequest($url, $postfields);
+		
 		//Lastly, need to FINALIZE
 		//https://dev.twitter.com/rest/reference/post/media/upload-finalize
 		//https://upload.twitter.com/1.1/media/upload.json?command=FINALIZE&media_id=710511363345354753
 		$url = 'https://upload.twitter.com/1.1/media/upload.json';
-
-		$requestMethod = 'POST';
-
 		$postfields = array(
 			'command' => "FINALIZE",
 			'media_id' => "$mediaID",
 		);
-
-		$twitter = new TwitterAPIExchange($settings);
-		$fullResponse = $twitter->buildOauth($url, $requestMethod)
-				->setPostfields($postfields)
-				->performRequest();
+	
+		self::SendTwitterPostRequest($url, $postfields);
 
 		//Finally, Tweet the image-to-base64-encoding
 		$output = "$title\r#NASA #ImageOfTheDay #Space";
