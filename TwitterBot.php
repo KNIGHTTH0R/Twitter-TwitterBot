@@ -7,6 +7,26 @@ class TwitterBot
 	const CONSUMER_KEY = "TwitterConsumerKey";
 	const CONSUMER_SECRET = "TwitterConsumerSecret";
 	
+	//Reusable function to Send a Twitter Get request, pass in request URL and array of parameters
+	function SendTwitterGetRequest($url, $getfield)
+	{
+		$settings = array
+		(
+			'oauth_access_token' => self::OAUTH_ACCESS_TOKEN,
+			'oauth_access_token_secret' => self::OAUTH_ACCESS_TOKEN_SECRET,
+			'consumer_key' => self::CONSUMER_KEY,
+			'consumer_secret' => self::CONSUMER_SECRET
+		);
+
+		$twitter = new TwitterAPIExchange($settings);
+		$fullResponse = $twitter->setGetfield($getfield)
+						->buildOauth($url, 'GET')
+						->performRequest();
+						
+		$json = json_decode($fullResponse);
+		return $json;
+	}
+	
 	//Reusable function to Send a Twitter Post request, pass in request URL and array of parameters
 	function SendTwitterPostRequest($url, $postfields)
 	{
@@ -36,27 +56,12 @@ class TwitterBot
 	//Pass in a string array of "interests" that the bot will search for and Retweet
 	function RetweetInterests($searchWords)
 	{
-		$settings = array
-		(
-			'oauth_access_token' => self::OAUTH_ACCESS_TOKEN,
-			'oauth_access_token_secret' => self::OAUTH_ACCESS_TOKEN_SECRET,
-			'consumer_key' => self::CONSUMER_KEY,
-			'consumer_secret' => self::CONSUMER_SECRET
-		);
-			
 		//The big foreach loop now to Retween a number of Tweets for each subject in the passed-in string array
 		foreach($searchWords as $searchWord) 
 		{
-			$url = 'https://api.twitter.com/1.1/search/tweets.json';
-			
+			$url = 'https://api.twitter.com/1.1/search/tweets.json';	
 			$getfield = "q=$searchWord";
-			$requestMethod = 'GET';
-			$twitter = new TwitterAPIExchange($settings);
-			$fullResponse = $twitter->setGetfield($getfield)
-							->buildOauth($url, $requestMethod)
-							->performRequest();
-							
-			$json = json_decode($fullResponse);
+			$json = self::SendTwitterGetRequest($url, $getfield);
 			
 			//Retweet $numberOfTweetsToRetweet tweets about each subject
 			$numberOfTweetsToRetweet = 2;
@@ -79,28 +84,13 @@ class TwitterBot
 
 	//Pass in a string array of "interests" that the bot will search for and Like
 	function LikeTweets($searchWords)
-	{
-		$settings = array
-		(
-			'oauth_access_token' => self::OAUTH_ACCESS_TOKEN,
-			'oauth_access_token_secret' => self::OAUTH_ACCESS_TOKEN_SECRET,
-			'consumer_key' => self::CONSUMER_KEY,
-			'consumer_secret' => self::CONSUMER_SECRET
-		);
-		
+	{		
 		//The big foreach loop now to Like a number of Tweets for each subject in the passed-in string array
 		foreach($searchWords as $searchWord) 
 		{
 			$url = 'https://api.twitter.com/1.1/search/tweets.json';
-			
-			$getfield = "q=$searchWord";
-			$requestMethod = 'GET';
-			$twitter = new TwitterAPIExchange($settings);
-			$fullResponse = $twitter->setGetfield($getfield)
-							->buildOauth($url, $requestMethod)
-							->performRequest();
-							
-			$json = json_decode($fullResponse);
+			$getfield = "q=$searchWord";	
+			$json = self::SendTwitterGetRequest($url, $getfield);
 		
 			//Like $numberOfTweetsToLike tweets about each subject?
 			$numberOfTweetsToLike = 2;
@@ -130,28 +120,11 @@ class TwitterBot
 	//The method returns the new latest Tweet ID, ready to be saved so it can be passed back in next time
 	function ManageMentions($oldestMentionID)
 	{
-		$settings = array
-		(
-			'oauth_access_token' => self::OAUTH_ACCESS_TOKEN,
-			'oauth_access_token_secret' => self::OAUTH_ACCESS_TOKEN_SECRET,
-			'consumer_key' => self::CONSUMER_KEY,
-			'consumer_secret' => self::CONSUMER_SECRET
-		);
-
 		//id_str was used to Retweet, so let's go with that!
 		
 		$url = 'https://api.twitter.com/1.1/statuses/mentions_timeline.json';
 		$getfield = "since_id=$oldestMentionID";
-
-		$requestMethod = 'GET';
-
-		$twitter = new TwitterAPIExchange($settings);
-		
-		$fullResponse = $twitter->setGetfield($getfield)
-						->buildOauth($url, $requestMethod)
-						->performRequest();
-				
-		$json = json_decode($fullResponse);
+		$json = self::SendTwitterGetRequest($url, $getfield);
 
 		$mentionCount = count($json);
 		
