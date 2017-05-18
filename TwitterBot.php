@@ -27,6 +27,13 @@ class TwitterBot
 		return $json;
 	}
 	
+	function GetTwitterUserLookup($getfield)
+	{
+		$url = 'https://api.twitter.com/1.1/users/lookup.json';
+		$lookupUserJSON = self::SendTwitterGetRequest($url, $getfield);
+		return $lookupUserJSON;
+	}
+	
 	//Reusable function to Send a Twitter Post request, pass in request URL and array of parameters
 	function SendTwitterPostRequest($url, $postfields)
 	{
