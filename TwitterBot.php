@@ -227,9 +227,12 @@ class TwitterBot
 			{
 				$status = "Thanks @$screenName :)";
 			}
-					
+			
+			$inReplyTo = $tweetJSON->id;
+				
 			$postfields = array(
-			  'status' => "$status"
+			  'status' => "$status",
+			  'in_reply_to_status_id' => "$inReplyTo"
 			);	
 			
 			$requestMethod = 'POST';
