@@ -1,5 +1,8 @@
 <?php
 
+//Need to include this PHP library
+require_once('TwitterAPIExchange.php');
+
 class TwitterBot
 {
 	const OAUTH_ACCESS_TOKEN = "TwitterAccessToken";
