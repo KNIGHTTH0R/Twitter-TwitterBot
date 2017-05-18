@@ -7,6 +7,26 @@ class TwitterBot
 	const CONSUMER_KEY = "TwitterConsumerKey";
 	const CONSUMER_SECRET = "TwitterConsumerSecret";
 	
+	//Reusable function to send Tweets, just pass in an array of parameters
+	function SendTweet($postfields)
+	{
+		$settings = array
+		(
+			'oauth_access_token' => self::OAUTH_ACCESS_TOKEN,
+			'oauth_access_token_secret' => self::OAUTH_ACCESS_TOKEN_SECRET,
+			'consumer_key' => self::CONSUMER_KEY,
+			'consumer_secret' => self::CONSUMER_SECRET
+		);
+		
+		$url = 'https://api.twitter.com/1.1/statuses/update.json';
+		
+		$requestMethod = 'POST';
+		$twitter = new TwitterAPIExchange($settings);
+		$fullResponse = $twitter->buildOauth($url, $requestMethod)
+						->setPostfields($postfields)
+						->performRequest();
+	}
+	
 	//Pass in a string array of "interests" that the bot will search for and Retweet
 	function RetweetInterests($searchWords)
 	{
@@ -176,16 +196,6 @@ class TwitterBot
 	//Reply to Tweets sent to the bot in certain cases...
 	function ReplyToTweet($tweetJSON)
 	{
-		$settings = array
-		(
-			'oauth_access_token' => self::OAUTH_ACCESS_TOKEN,
-			'oauth_access_token_secret' => self::OAUTH_ACCESS_TOKEN_SECRET,
-			'consumer_key' => self::CONSUMER_KEY,
-			'consumer_secret' => self::CONSUMER_SECRET
-		);
-		
-		$url = 'https://api.twitter.com/1.1/statuses/update.json';
-
 		$screenName = $tweetJSON->user->screen_name;
 		$mentionText = strtoupper($tweetJSON->text);
 		
@@ -235,11 +245,7 @@ class TwitterBot
 			  'in_reply_to_status_id' => "$inReplyTo"
 			);	
 			
-			$requestMethod = 'POST';
-			$twitter = new TwitterAPIExchange($settings);
-			$fullResponse = $twitter->buildOauth($url, $requestMethod)
-							->setPostfields($postfields)
-							->performRequest();	
+			self::SendTweet($postfields);
 		}
 		else
 		{
@@ -335,8 +341,6 @@ class TwitterBot
 				->performRequest();
 
 		//Finally, Tweet the image-to-base64-encoding
-		$url = 'https://api.twitter.com/1.1/statuses/update.json';
-
 		$output = "$title\r#NASA #ImageOfTheDay #Space";
 
 		$postfields = array(
@@ -344,13 +348,7 @@ class TwitterBot
 		  'media_ids' => "$mediaID"
 		);	
 
-		$requestMethod = 'POST';
-		$twitter = new TwitterAPIExchange($settings);
-		$fullResponse = $twitter->buildOauth($url, $requestMethod)
-						->setPostfields($postfields)
-						->performRequest();
-
-		//echo $fullResponse;
+		self::SendTweet($postfields);
 		echo "Tweeted NASA IOTD...";
 	}
 
@@ -422,28 +420,12 @@ class TwitterBot
 			return;
 		}
 		
-		//https://api.twitter.com/1.1/statuses/update.json&display_coordinates=false
-		$settings = array
-		(
-			'oauth_access_token' => self::OAUTH_ACCESS_TOKEN,
-			'oauth_access_token_secret' => self::OAUTH_ACCESS_TOKEN_SECRET,
-			'consumer_key' => self::CONSUMER_KEY,
-			'consumer_secret' => self::CONSUMER_SECRET
-		);
-		
-		$url = 'https://api.twitter.com/1.1/statuses/update.json';
-
 		$postfields = array(
 		  'status' => "$output"
 		);	
 		
-		$requestMethod = 'POST';
-		$twitter = new TwitterAPIExchange($settings);
-		$fullResponse = $twitter->buildOauth($url, $requestMethod)
-						->setPostfields($postfields)
-						->performRequest();
-
-		echo $fullResponse;		
+		self::SendTweet($postfields);	
+		echo "Tweeted Weather...";
 	}
 }
 ?>
