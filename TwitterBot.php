@@ -30,6 +30,44 @@ class TwitterBot
 		return $json;
 	}
 	
+	//Reusable function to Send a Twitter Post request, pass in request URL and array of parameters
+	function SendTwitterPostRequest($url, $postfields)
+	{
+		$twitter = new TwitterAPIExchange($this->settings);
+		$fullResponse = $twitter->buildOauth($url, 'POST')
+						->setPostfields($postfields)
+						->performRequest();
+						
+		return $fullResponse;
+	}
+	
+	//Function to favourite a Tweet by ID
+	function FavouriteTweet($tweetID)
+	{
+		//Let's favourite!
+		// $url = 'https://api.twitter.com/1.1/favorites/create.json';
+		// $url = "https://api.twitter.com/1.1/favorites/create.json?id=$tweetID";
+		$url = "https://api.twitter.com/1.1/favorites/create.json";
+		
+		$postfields = array (
+			'id' => "$tweetID"
+		);
+		
+		return $this->SendTwitterPostRequest($url, $postfields);
+	}
+	
+	//Function to Retweet a Tweet by ID
+	function RetweetTweet($tweetID)
+	{
+		$url = "https://api.twitter.com/1.1/statuses/retweet/$tweetID.json";
+											
+		$postfields = array(
+		  'trim_user' => "1"
+		);
+
+		return $this->SendTwitterPostRequest($url, $postfields);
+	}
+	
 	//Returns the JSON for your account
 	function GetSelfLookup()
 	{
@@ -45,17 +83,7 @@ class TwitterBot
 		$lookupUserJSON = $this->SendTwitterGetRequest($url, $getfield);
 		return $lookupUserJSON;
 	}
-	
-	//Reusable function to Send a Twitter Post request, pass in request URL and array of parameters
-	function SendTwitterPostRequest($url, $postfields)
-	{
-		$twitter = new TwitterAPIExchange($this->settings);
-		$fullResponse = $twitter->buildOauth($url, 'POST')
-						->setPostfields($postfields)
-						->performRequest();
-						
-		return $fullResponse;
-	}
+
 	
 	//Reusable function to send Tweets, just pass in an array of parameters
 	function SendTweet($postfields)
@@ -79,14 +107,7 @@ class TwitterBot
 			for($count = 0; $count < $numberOfTweetsToRetweet; $count++)
 			{
 				$tweetId = $json->statuses[$count]->id_str;			
-				
-				$url = "https://api.twitter.com/1.1/statuses/retweet/$tweetId.json";
-													
-				$postfields = array(
-				  'trim_user' => "1"
-				);
-
-				$this->SendTwitterPostRequest($url, $postfields);
+				$this->RetweetTweet($tweetId);
 			}
 		}
 		
@@ -109,17 +130,7 @@ class TwitterBot
 			for($count = 0; $count < $numberOfTweetsToLike; $count++)
 			{
 				$tweetID = $json->statuses[$count]->id_str;
-				
-				//Let's favourite!
-				// $url = 'https://api.twitter.com/1.1/favorites/create.json';
-				// $url = "https://api.twitter.com/1.1/favorites/create.json?id=$tweetID";
-				$url = "https://api.twitter.com/1.1/favorites/create.json";
-				
-				$postfields = array (
-					'id' => "$tweetID"
-				);
-				
-				$temp = $this->SendTwitterPostRequest($url, $postfields);
+				$temp = $this->FavouriteTweet($tweetID);
 			}
 		}
 		
@@ -152,15 +163,7 @@ class TwitterBot
 		for($tweetIndex = 0; $tweetIndex < $mentionCount; $tweetIndex++)
 		{
 			$tweetID = $json[$tweetIndex]->id_str;
-			
-			//Let's favourite!
-			$url = 'https://api.twitter.com/1.1/favorites/create.json';
-			
-			$postfields = array (
-				'id' => "$tweetID"
-			);
-			
-			$temp = $this->SendTwitterPostRequest($url, $postfields);
+			$temp = $this->FavouriteTweet($tweetID);
 			
 			$this->ReplyToTweet($json[$tweetIndex]);
 		}
