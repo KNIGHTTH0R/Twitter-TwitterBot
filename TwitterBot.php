@@ -10,18 +10,23 @@ class TwitterBot
 	const CONSUMER_KEY = "TwitterConsumerKey";
 	const CONSUMER_SECRET = "TwitterConsumerSecret";
 	
-	//Reusable function to Send a Twitter Get request, pass in request URL and array of parameters
-	function SendTwitterGetRequest($url, $getfield)
+	private $settings;
+	
+	public function __construct()
 	{
-		$settings = array
+        $this->settings = array
 		(
 			'oauth_access_token' => self::OAUTH_ACCESS_TOKEN,
 			'oauth_access_token_secret' => self::OAUTH_ACCESS_TOKEN_SECRET,
 			'consumer_key' => self::CONSUMER_KEY,
 			'consumer_secret' => self::CONSUMER_SECRET
 		);
-
-		$twitter = new TwitterAPIExchange($settings);
+	}
+	
+	//Reusable function to Send a Twitter Get request, pass in request URL and array of parameters
+	function SendTwitterGetRequest($url, $getfield)
+	{
+		$twitter = new TwitterAPIExchange($this->settings);
 		$fullResponse = $twitter->setGetfield($getfield)
 						->buildOauth($url, 'GET')
 						->performRequest();
@@ -33,22 +38,14 @@ class TwitterBot
 	function GetTwitterUserLookup($getfield)
 	{
 		$url = 'https://api.twitter.com/1.1/users/lookup.json';
-		$lookupUserJSON = self::SendTwitterGetRequest($url, $getfield);
+		$lookupUserJSON = $this->SendTwitterGetRequest($url, $getfield);
 		return $lookupUserJSON;
 	}
 	
 	//Reusable function to Send a Twitter Post request, pass in request URL and array of parameters
 	function SendTwitterPostRequest($url, $postfields)
 	{
-		$settings = array
-		(
-			'oauth_access_token' => self::OAUTH_ACCESS_TOKEN,
-			'oauth_access_token_secret' => self::OAUTH_ACCESS_TOKEN_SECRET,
-			'consumer_key' => self::CONSUMER_KEY,
-			'consumer_secret' => self::CONSUMER_SECRET
-		);
-
-		$twitter = new TwitterAPIExchange($settings);
+		$twitter = new TwitterAPIExchange($this->settings);
 		$fullResponse = $twitter->buildOauth($url, 'POST')
 						->setPostfields($postfields)
 						->performRequest();
@@ -60,7 +57,7 @@ class TwitterBot
 	function SendTweet($postfields)
 	{	
 		$url = 'https://api.twitter.com/1.1/statuses/update.json';
-		self::SendTwitterPostRequest($url, $postfields);
+		$this->SendTwitterPostRequest($url, $postfields);
 	}
 	
 	//Pass in a string array of "interests" that the bot will search for and Retweet
@@ -71,7 +68,7 @@ class TwitterBot
 		{
 			$url = 'https://api.twitter.com/1.1/search/tweets.json';	
 			$getfield = "q=$searchWord";
-			$json = self::SendTwitterGetRequest($url, $getfield);
+			$json = $this->SendTwitterGetRequest($url, $getfield);
 			
 			//Retweet $numberOfTweetsToRetweet tweets about each subject
 			$numberOfTweetsToRetweet = 2;
@@ -85,7 +82,7 @@ class TwitterBot
 				  'trim_user' => "1"
 				);
 
-				self::SendTwitterPostRequest($url, $postfields);
+				$this->SendTwitterPostRequest($url, $postfields);
 			}
 		}
 		
@@ -100,7 +97,7 @@ class TwitterBot
 		{
 			$url = 'https://api.twitter.com/1.1/search/tweets.json';
 			$getfield = "q=$searchWord";	
-			$json = self::SendTwitterGetRequest($url, $getfield);
+			$json = $this->SendTwitterGetRequest($url, $getfield);
 		
 			//Like $numberOfTweetsToLike tweets about each subject?
 			$numberOfTweetsToLike = 2;
@@ -118,7 +115,7 @@ class TwitterBot
 					'id' => "$tweetID"
 				);
 				
-				$temp = self::SendTwitterPostRequest($url, $postfields);
+				$temp = $this->SendTwitterPostRequest($url, $postfields);
 			}
 		}
 		
@@ -134,7 +131,7 @@ class TwitterBot
 		
 		$url = 'https://api.twitter.com/1.1/statuses/mentions_timeline.json';
 		$getfield = "since_id=$oldestMentionID";
-		$json = self::SendTwitterGetRequest($url, $getfield);
+		$json = $this->SendTwitterGetRequest($url, $getfield);
 
 		$mentionCount = count($json);
 		
@@ -159,9 +156,9 @@ class TwitterBot
 				'id' => "$tweetID"
 			);
 			
-			$temp = self::SendTwitterPostRequest($url, $postfields);
+			$temp = $this->SendTwitterPostRequest($url, $postfields);
 			
-			self::ReplyToTweet($json[$tweetIndex]);
+			$this->ReplyToTweet($json[$tweetIndex]);
 		}
 		
 		return $newSinceID;
@@ -219,7 +216,7 @@ class TwitterBot
 			  'in_reply_to_status_id' => "$inReplyTo"
 			);	
 			
-			self::SendTweet($postfields);
+			$this->SendTweet($postfields);
 		}
 		else
 		{
@@ -252,7 +249,7 @@ class TwitterBot
 			'total_bytes' => strlen(file_get_contents($path))
 		);
 
-		$fullResponse = self::SendTwitterPostRequest($url, $postfields);
+		$fullResponse = $this->SendTwitterPostRequest($url, $postfields);
 		$json = json_decode($fullResponse);
 
 		$mediaID = $json->media_id_string;
@@ -276,7 +273,7 @@ class TwitterBot
 			'media_data' => "$mediaData"
 		);
 
-		self::SendTwitterPostRequest($url, $postfields);
+		$this->SendTwitterPostRequest($url, $postfields);
 		
 		//Lastly, need to FINALIZE
 		//https://dev.twitter.com/rest/reference/post/media/upload-finalize
@@ -287,7 +284,7 @@ class TwitterBot
 			'media_id' => "$mediaID",
 		);
 	
-		self::SendTwitterPostRequest($url, $postfields);
+		$this->SendTwitterPostRequest($url, $postfields);
 
 		//Finally, Tweet the image-to-base64-encoding
 		$output = "$title\r#NASA #ImageOfTheDay #Space";
@@ -297,7 +294,7 @@ class TwitterBot
 		  'media_ids' => "$mediaID"
 		);	
 
-		self::SendTweet($postfields);
+		$this->SendTweet($postfields);
 		echo "Tweeted NASA IOTD...";
 	}
 
@@ -373,7 +370,7 @@ class TwitterBot
 		  'status' => "$output"
 		);	
 		
-		self::SendTweet($postfields);	
+		$this->SendTweet($postfields);	
 		echo "Tweeted Weather...";
 	}
 }
