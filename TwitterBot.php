@@ -30,6 +30,15 @@ class TwitterBot
 		return $json;
 	}
 	
+	//Returns the JSON for your account
+	function GetSelfLookup()
+	{
+		//Your Twitter User ID:
+		$getfield = 'user_id=123456789123456789';
+		return $this->GetTwitterUserLookup($getfield);
+	}
+	
+	//Return the JSON about a specific user, pass in 'user_id=123456789123456789'
 	function GetTwitterUserLookup($getfield)
 	{
 		$url = 'https://api.twitter.com/1.1/users/lookup.json';
