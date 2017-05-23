@@ -5,21 +5,16 @@ require_once('TwitterAPIExchange.php');
 
 class TwitterBot
 {
-	const OAUTH_ACCESS_TOKEN = "TwitterAccessToken";
-	const OAUTH_ACCESS_TOKEN_SECRET = "TwitterAccessTokenSecret";
-	const CONSUMER_KEY = "TwitterConsumerKey";
-	const CONSUMER_SECRET = "TwitterConsumerSecret";
-	
 	private $settings;
 	
 	public function __construct()
 	{
-        	$this->settings = array
+		$this->settings = array
 		(
-			'oauth_access_token' => self::OAUTH_ACCESS_TOKEN,
-			'oauth_access_token_secret' => self::OAUTH_ACCESS_TOKEN_SECRET,
-			'consumer_key' => self::CONSUMER_KEY,
-			'consumer_secret' => self::CONSUMER_SECRET
+			'oauth_access_token' => "TwitterAccessToken",
+			'oauth_access_token_secret' => "TwitterAccessTokenSecret",
+			'consumer_key' => "TwitterConsumerKey",
+			'consumer_secret' => "TwitterConsumerSecret"
 		);
 	}
 	
