@@ -14,7 +14,7 @@ class TwitterBot
 	
 	public function __construct()
 	{
-        $this->settings = array
+        	$this->settings = array
 		(
 			'oauth_access_token' => self::OAUTH_ACCESS_TOKEN,
 			'oauth_access_token_secret' => self::OAUTH_ACCESS_TOKEN_SECRET,
