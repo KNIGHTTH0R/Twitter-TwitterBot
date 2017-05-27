@@ -84,6 +84,13 @@ class TwitterBot
 		return $lookupUserJSON;
 	}
 
+	function GetSearchResults($searchWord)
+	{
+		$url = 'https://api.twitter.com/1.1/search/tweets.json';	
+		$getfield = "q=$searchWord";
+		$json = $this->SendTwitterGetRequest($url, $getfield);
+		return $json;
+	}
 	
 	//Reusable function to send Tweets, just pass in an array of parameters
 	function SendTweet($postfields)
@@ -98,9 +105,7 @@ class TwitterBot
 		//The big foreach loop now to Retween a number of Tweets for each subject in the passed-in string array
 		foreach($searchWords as $searchWord) 
 		{
-			$url = 'https://api.twitter.com/1.1/search/tweets.json';	
-			$getfield = "q=$searchWord";
-			$json = $this->SendTwitterGetRequest($url, $getfield);
+			$json = $this->GetSearchResults($searchWord)
 			
 			//Retweet $numberOfTweetsToRetweet tweets about each subject
 			$numberOfTweetsToRetweet = 2;
