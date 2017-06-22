@@ -236,20 +236,9 @@ class TwitterBot
 		}
 	}
 
-	//Tweet the NASA Image Of The Day
-	//Pass in the 'NASA Image Of The Day' JSON, obtained from the NASA API
-	function TweetNASAIOTD($nasaJSON)
-	{	
-		//Harvest NASA IOTD properties
-		$copyright = $nasaJSON->copyright;
-		$date = $nasaJSON->date;
-		$explanation = $nasaJSON->explanation;
-		$title = $nasaJSON->title;
-		$image = $nasaJSON->url;
-
-		//Image path
-		$path = $nasaJSON->url;
-
+	//Reusable function to prepare a JPG image from a URL ready to be Tweeted
+	function GetJPGMediaID($path)
+	{
 		//Need to do the INIT first to get a Media ID
 		//https://dev.twitter.com/rest/reference/post/media/upload-init
 		// $url = "https://api.twitter.com/1.1/statuses/retweet/$tweetId.json";
@@ -295,19 +284,58 @@ class TwitterBot
 			'command' => "FINALIZE",
 			'media_id' => "$mediaID",
 		);
-	
+		
 		$this->SendTwitterPostRequest($url, $postfields);
+		
+		//Finally, return the $mediaID ready to be Tweeted		
+		return $mediaID;
+	}
+	
+	//Tweet the NASA Image Of The Day
+	//Pass in the 'NASA Image Of The Day' JSON, obtained from the NASA API
+	function TweetNASAIOTD()
+	{
+		//Harvest NASA IOTD properties
+		$nasaHelper = new NASAHelper();
 
-		//Finally, Tweet the image-to-base64-encoding
-		$output = "$title\r#NASA #ImageOfTheDay #Space";
+		$copyright = $nasaHelper->copyright;
+		$date = $nasaHelper->date;
+		$explanation = $nasaHelper->explanation;
+		$title = $nasaHelper->title;
+		$path = $nasaHelper->image;
+		$mediaType = $nasaHelper->mediaType;
+		
+		//If the media_type flag on the NASA JSON is "video",
+		//then simply Tweet the link to that video.
+		//Otherwise, process and Tweet the NASA IOTD
+		if($mediaType == "video")
+		{
+			//Tweet the NASA IOTD...video
+			$output = "$title\r#NASA #ImageOfTheDay #Space\r $path";
 
-		$postfields = array(
-		  'status' => "$output",
-		  'media_ids' => "$mediaID"
-		);	
+			$postfields = array(
+			  'status' => "$output",
+			);	
 
-		$this->SendTweet($postfields);
-		echo "Tweeted NASA IOTD...";
+			echo $this->SendTweet($postfields);
+			//echo "Tweeted NASA IOTD...";
+		}
+		else
+		{
+			//Tweet the image-to-base64-encoding
+			$mediaID = $this->GetJPGMediaID($path);
+		
+			//Tweet the image-to-base64-encoding
+			$output = "$title\r#NASA #ImageOfTheDay #Space";
+
+			$postfields = array(
+			  'status' => "$output",
+			  'media_ids' => "$mediaID"
+			);	
+
+			echo $this->SendTweet($postfields);
+			//echo "Tweeted NASA IOTD...";
+		}
 	}
 
 	//Tweet a Weather forecast
