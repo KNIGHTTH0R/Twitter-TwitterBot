@@ -413,5 +413,16 @@ class TwitterBot
 		$this->SendTweet($postfields);	
 		echo "Tweeted Weather...";
 	}
+	
+	//Retweet the most recent quote Tweeted by the account 'qu0te_b0t'
+	function TweetQuote()
+	{
+		//Username: qu0te_b0t
+		$url = 'https://api.twitter.com/1.1/statuses/user_timeline.json';
+		$getfield = "screen_name=qu0te_b0t";
+		$json = $this->SendTwitterGetRequest($url, $getfield);
+		$tweetID = $json[0]->id_str;
+		echo $this->RetweetTweet($tweetID);
+	}
 }
 ?>
