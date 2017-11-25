@@ -41,6 +41,52 @@ class TwitterBot
 		return $fullResponse;
 	}
 	
+	function GetFollowers()
+	{
+		//Get the lists of Followers from Twitter
+		//Add Pagination and Concatenation of Arrays...
+		$url = 'https://api.twitter.com/1.1/followers/ids.json';
+		$getfield = '';
+
+		return $this->SendTwitterGetRequest($url, $getfield);
+	}
+
+	function GetFollowing()
+	{
+		//Get the lists of Following from Twitter
+		//Add Pagination and Concatenation of Arrays...
+		$url = 'https://api.twitter.com/1.1/friends/ids.json';
+		$getfield = '';
+
+		return $this->SendTwitterGetRequest($url, $getfield);
+	}
+	
+	//Follow a user
+	function FollowUser($userID, $screenName)
+	{
+		$url = 'https://api.twitter.com/1.1/friendships/create.json';
+
+		$postfields = array(
+			'user_id' => "$userID",
+			'screen_name' => "$screenName",
+		);
+
+		return $this->SendTwitterPostRequest($url, $postfields);
+	}
+
+	//Unfollow a user
+	function UnfollowUser($userID, $screenName)
+	{
+		$url = 'https://api.twitter.com/1.1/friendships/destroy.json';
+		
+		$postfields = array(
+			'user_id' => "$userID",
+			'screen_name' => "$screenName"
+		);
+
+		return $this->SendTwitterPostRequest($url, $postfields);
+	}
+	
 	//Function to favourite a Tweet by ID
 	function FavouriteTweet($tweetID)
 	{
