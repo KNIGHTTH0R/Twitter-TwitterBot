@@ -30,6 +30,21 @@ class TwitterBot
 		return $json;
 	}
 	
+	//Reusable function to Send a Twitter Get request, pass in request URL and array of parameters
+	//Unlike 'SendTwitterGetRequest' method, which returns JSON, this returns an associative array,
+	//ie, similar to a C# dictionary:
+	//myList['ids'] = ['123', '456', '789];
+	function SendTwitterGetRequestAssociativeArray($url, $getfield)
+	{
+		$twitter = new TwitterAPIExchange($this->settings);
+		$fullResponse = $twitter->setGetfield($getfield)
+						->buildOauth($url, 'GET')
+						->performRequest();
+						
+		$json = json_decode($fullResponse, true);
+		return $json;
+	}
+	
 	//Reusable function to Send a Twitter Post request, pass in request URL and array of parameters
 	function SendTwitterPostRequest($url, $postfields)
 	{
@@ -41,6 +56,8 @@ class TwitterBot
 		return $fullResponse;
 	}
 	
+	//Old method kept for now for backup
+	/*
 	function GetFollowers()
 	{
 		//Get the lists of Followers from Twitter
@@ -50,7 +67,57 @@ class TwitterBot
 
 		return $this->SendTwitterGetRequest($url, $getfield);
 	}
+	*/
 
+	//Function to get a JSON list of Twitter 'Followers'
+	//Each "GetFollowers" API request can only return a maximum of 5000 UserIds at once, so pagination
+	//is needed to get the next batch of 5000, add it to the first array and then return the whole lot
+	//Currently works for 0-10000 UserIds - while loop needed for more than 10000
+	//After that, as the API can only be used 15 times in 15 minutes, offline storage will be needed once
+	//the method has to paginate more than 15 times (15 * 5 = 75000 UserIds)
+	function GetFollowers()
+	{
+		//Get the lists of Followers from Twitter
+		$url = 'https://api.twitter.com/1.1/followers/ids.json';
+		$getfield = '';
+
+		$followersJSON = $this->SendTwitterGetRequest($url, $getfield);
+
+		$jsonAssociativeArray = json_decode(json_encode($followersJSON), true);
+
+		if($followersJSON->next_cursor_str != "0")
+		{
+			$nextFollowersJSON = $this->GetFollowersByCursor($followersJSON->next_cursor_str);
+		
+			foreach($nextFollowersJSON['ids'] as $followerUserID)
+			{
+				array_push($jsonAssociativeArray['ids'], $followerUserID);
+			}
+
+			//Odd because you need to convert from JSON to associative array to push more Ids into the array
+			//But the method that calls this expects it back as JSON
+			return json_decode(json_encode($jsonAssociativeArray));
+		}
+		else
+		{
+			return $followersJSON;
+		}
+	}
+	
+	//Function to get an associative array of the next batch of Twitter Followers, ready to be added
+	//to the first array of Followers
+	function GetFollowersByCursor($cursorString)
+	{
+		//Get the lists of Followers from Twitter
+		//Add Pagination and Concatenation of Arrays...
+		$url = 'https://api.twitter.com/1.1/followers/ids.json';
+		$getfield = "cursor=$cursorString";
+
+		return $this->SendTwitterGetRequestAssociativeArray($url, $getfield);
+	}
+	
+	//Old method kept for now for backup
+	/*
 	function GetFollowing()
 	{
 		//Get the lists of Following from Twitter
@@ -59,6 +126,55 @@ class TwitterBot
 		$getfield = '';
 
 		return $this->SendTwitterGetRequest($url, $getfield);
+	}
+	*/
+	
+	
+	//Function to get a JSON list of Twitter 'Following' users
+	//Each "GetFriends" API request can only return a maximum of 5000 UserIds at once, so pagination
+	//is needed to get the next batch of 5000, add it to the first array and then return the whole lot
+	//Currently works for 0-10000 UserIds - while loop needed for more than 10000
+	//After that, as the API can only be used 15 times in 15 minutes, offline storage will be needed once
+	//the method has to paginate more than 15 times (15 * 5 = 75000 UserIds)
+	function GetFollowing()
+	{
+		//Get the lists of Following from Twitter
+		$url = 'https://api.twitter.com/1.1/friends/ids.json';
+		$getfield = '';
+		
+		$followingJSON = $this->SendTwitterGetRequest($url, $getfield);
+
+		$jsonAssociativeArray = json_decode(json_encode($followingJSON), true);
+
+		if($followingJSON->next_cursor_str != "0")
+		{
+			$nextFollowingJSON = $this->GetFollowingByCursor($followingJSON->next_cursor_str);
+		
+			foreach($nextFollowingJSON['ids'] as $followerUserID)
+			{
+				array_push($jsonAssociativeArray['ids'], $followerUserID);
+			}
+
+			//Odd because you need to convert from JSON to associative array to push more Ids into the array
+			//But the method that calls this expects it back as JSON
+			return json_decode(json_encode($jsonAssociativeArray));
+		}
+		else
+		{
+			return $followingJSON;
+		}
+	}
+	
+	//Function to get an associative array of the next batch of Twitter 'Following', ready to be added
+	//to the first array of 'Following'
+	function GetFollowingByCursor($cursorString)
+	{
+		//Get the lists of Followers from Twitter
+		//Add Pagination and Concatenation of Arrays...
+		$url = 'https://api.twitter.com/1.1/friends/ids.json';
+		$getfield = "cursor=$cursorString";
+
+		return $this->SendTwitterGetRequestAssociativeArray($url, $getfield);
 	}
 	
 	//Follow a user
